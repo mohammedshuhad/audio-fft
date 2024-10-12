@@ -1,2 +1,2 @@
-idf_component_register(SRCS "audio-fft.c"
+idf_component_register(SRC_DIRS "."
                     INCLUDE_DIRS ".")
