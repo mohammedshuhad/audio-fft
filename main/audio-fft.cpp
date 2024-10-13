@@ -21,15 +21,40 @@
 
 #define EXAMPLE_READ_LEN 256
 #define SAMPLE_FREQ 20000
-#define PLOT_SAMPLES 128
+#define PLOT_SAMPLES 256
 
 uint32_t buffer[PLOT_SAMPLES] = {0};
+double Xr[PLOT_SAMPLES/2 + 1];
+double Xi[PLOT_SAMPLES/2 + 1];
+
 std::complex<double> vec[MAX];
+
 int counter = 0;
 
 static TaskHandle_t s_task_handle;
 static const char *TAG = "FFT";
 static adc_channel_t channel[2] = {ADC_CHANNEL_4, ADC_CHANNEL_5};
+
+void calculateDFT()
+{
+    int N = PLOT_SAMPLES;
+    for (int k = 0 ; k < N/2 + 1 ; k++)
+    {
+        Xr[k] = 0;
+        Xi[k] = 0;
+        for (int n = 0 ; n < N ; n++)
+        {
+            Xr[k] += buffer[n] * cos(2 * M_PI * k * n / N);
+            Xi[k] -= buffer[n] * sin(2 * M_PI * k * n / N);
+        }
+    }
+
+    for (int i = 0; i < N/2 + 1; i++)
+    {
+        printf("(%f,%f)\n", Xr[i], Xi[i]);
+    }
+
+}
 
 static bool IRAM_ATTR s_conv_done_cb(adc_continuous_handle_t handle, const adc_continuous_evt_data_t *edata, void *user_data)
 {
@@ -147,7 +172,7 @@ exit_loop:
     //     vec[i] = std::complex<double>(buffer[i], 0);
     // }
 
-    int n = 32;
+    // int n = 32;
     // float test_array[32] = {1,0.878,0.540,0.071,-0.416,-0.801,-0.990,-0.936,-0.654,-0.211,0.284,0.709,0.960,0.977,0.754,0.347,-0.146,-0.602,-0.911,-0.997,-0.839,-0.476,0.004,0.483,0.844,0.998,0.907,0.595,0.137,-0.355,-0.760,-0.978};
     
     // for(int i = 0; i < n; i++)
@@ -158,9 +183,11 @@ exit_loop:
     // double d = 1.0;
     // FFT(vec, n, d);
 
-    // std::cout << "...printing the FFT of the array specified" << std::endl;
+    // std::cout << "\n\n\n\n...printing the FFT of the array specified" << std::endl;
     // for (int j = 0; j < n; j++)
     //     std::cout << vec[j] << std::endl;
+
+    calculateDFT();
 
     ESP_ERROR_CHECK(adc_continuous_stop(handle));
     ESP_ERROR_CHECK(adc_continuous_deinit(handle));
